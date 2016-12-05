@@ -43,25 +43,25 @@ RUN $PGBINDIR/bin/initdb -k -D $PGDATADIR
 
 # setting some postgres configurables
 
-RUN echo "listen_addresses = '*'" >> $PGDATADIR/postgresql.conf
-RUN echo "port = 5432" >> $PGDATADIR/postgresql.conf
-RUN echo "wal_level = replica" >> $PGDATADIR/postgresql.conf
-RUN echo "checkpoint_completion_target = 0.9" >> $PGDATADIR/postgresql.conf
-RUN echo "archive_mode = on" >> $PGDATADIR/postgresql.conf
-RUN echo "archive_command = '/bin/true'" >> $PGDATADIR/postgresql.conf
-RUN echo "max_wal_senders = 16" >> $PGDATADIR/postgresql.conf
-RUN echo "wal_keep_segments = 10" >> $PGDATADIR/postgresql.conf
-RUN echo "max_replication_slots = 10" >> $PGDATADIR/postgresql.conf
-RUN echo "hot_standby = on" >> $PGDATADIR/postgresql.conf
-RUN echo "log_destination = 'stderr'" >> $PGDATADIR/postgresql.conf
-RUN echo "logging_collector = on" >> $PGDATADIR/postgresql.conf
-RUN echo "log_filename = 'postgresql-%Y-%m-%d.log'" >> $PGDATADIR/postgresql.conf
-RUN echo "log_line_prefix = ''" >> $PGDATADIR/postgresql.conf
+RUN echo "listen_addresses = '*'" >> $PGDATADIR/postgresql.conf && \
+	echo "port = 5432" >> $PGDATADIR/postgresql.conf && \
+	echo "wal_level = replica" >> $PGDATADIR/postgresql.conf && \
+	echo "checkpoint_completion_target = 0.9" >> $PGDATADIR/postgresql.conf && \
+	echo "archive_mode = on" >> $PGDATADIR/postgresql.conf && \
+	echo "archive_command = '/bin/true'" >> $PGDATADIR/postgresql.conf && \
+	echo "max_wal_senders = 16" >> $PGDATADIR/postgresql.conf && \
+	echo "wal_keep_segments = 10" >> $PGDATADIR/postgresql.conf && \
+	echo "max_replication_slots = 10" >> $PGDATADIR/postgresql.conf && \
+	echo "hot_standby = on" >> $PGDATADIR/postgresql.conf && \
+	echo "log_destination = 'stderr'" >> $PGDATADIR/postgresql.conf && \
+	echo "logging_collector = on" >> $PGDATADIR/postgresql.conf && \
+	echo "log_filename = 'postgresql-%Y-%m-%d.log'" >> $PGDATADIR/postgresql.conf && \
+	echo "log_line_prefix = ''" >> $PGDATADIR/postgresql.conf
 
 ## Setting pg_hba.conf for passwordless access for all users and replication
 
-RUN echo "host    all             all             10.0.0.1/16            trust" >> $PGDATADIR/pg_hba.conf
-RUN echo "host    replication     repuser         10.0.0.1/16            trust" >> $PGDATADIR/pg_hba.conf
+RUN echo "host    all             all             10.0.0.1/16            trust" >> $PGDATADIR/pg_hba.conf && \
+	echo "host    replication     repuser         10.0.0.1/16            trust" >> $PGDATADIR/pg_hba.conf
 
 #exposing port
 EXPOSE 5432
@@ -81,10 +81,10 @@ RUN $PGBINDIR/bin/pg_ctl -D $PGDATADIR/ start ; sleep 10 && \
 
 #Set a recovery.done so the slaves can find it
 
-RUN echo "standby_mode = 'on' " >$PGDATADIR/recovery.done
-RUN echo "primary_conninfo = 'user=repuser host=10.0.0.2 port=5432 application_name=a_slave'" >>$PGDATADIR/recovery.done
-RUN echo "trigger_file = '$PGDATADIR/finish.recovery'" >>$PGDATADIR/recovery.done
-RUN echo "recovery_target_timeline = 'latest'" >>$PGDATADIR/recovery.done
+RUN echo "standby_mode = 'on' " >$PGDATADIR/recovery.done && \
+	echo "primary_conninfo = 'user=repuser host=10.0.0.2 port=5432 application_name=a_slave'" >>$PGDATADIR/recovery.done && \
+	echo "trigger_file = '$PGDATADIR/finish.recovery'" >>$PGDATADIR/recovery.done && \ 
+	echo "recovery_target_timeline = 'latest'" >>$PGDATADIR/recovery.done 
 
 # copying an easy script for fast replica creation
 COPY mk_replica.sh /home/postgres/mk_replica.sh
