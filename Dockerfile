@@ -89,7 +89,7 @@ RUN echo "standby_mode = 'on' " >$PGDATADIR/recovery.done && \
 	echo "recovery_target_timeline = 'latest'" >>$PGDATADIR/recovery.done 
 
 # copying an easy script for fast replica creation
-COPY mk_replica.sh /home/postgres/mk_replica.sh
+COPY mk_replica.sh /home/$PGUSER/
 
 #USER root
 #Tadah !
