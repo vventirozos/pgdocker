@@ -2,42 +2,43 @@ FROM ubuntu:latest
 
 MAINTAINER vventirozos@omniti.com
 
-### CHANGE THE FOLLOWING 2 PARAMETERS IF YOU WANNA CHANGE POSTGRES INSTALL AND PGDATA DIRECTORIES ###
+### CHANGE THE FOLLOWING 3 PARAMETERS IF YOU WANNA CHANGE USER, POSTGRES INSTALL AND PGDATA DIRECTORIES ###
 
-ENV PGBINDIR=/home/postgres/pgsql
-ENV PGDATADIR=/home/postgres/pgdata
+ENV PGUSER=postgres
+ENV PGBINDIR=/home/$PGUSER/pgsql
+ENV PGDATADIR=/home/$PGUSER/pgdata
 
 #Installing packages and creating a OS user
 
-RUN apt-get update && apt-get install -y sudo wget joe less build-essential libreadline-dev zlib1g-dev flex bison libxml2-dev libxslt-dev libssl-dev
-RUN useradd -c /home/postgres -ms /bin/bash postgres
+RUN apt-get update && apt-get install -y sudo wget joe less build-essential libreadline-dev zlib1g-dev flex bison libxml2-dev libxslt-dev libssl-dev && \
+	useradd -c /home/$PGUSER -ms /bin/bash $PGUSER
 
 
 #add user postgres to sudoers
 
-run echo "postgres ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+run echo "$PGUSER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # The next steps will run as postgres
 
-USER postgres
-
+USER $PGUSER
+WORKDIR /home/$PGUSER
 #getting the -latest- (always) postgres version compile world and install
 
-RUN cd ; wget https://www.postgresql.org/ftp/latest/ -q -O - |grep "tar.gz" |grep -v md5 |grep -v sha256 |awk -F "\"" '{print $2}' |xargs wget
-RUN cd ; ls -1 *.tar.gz |xargs tar zxfv
-RUN cd ; cd postgres* ; ./configure --prefix=$PGBINDIR  ; make world ; sudo make install-world
+RUN wget https://www.postgresql.org/ftp/latest/ -q -O - |grep "tar.gz" |grep -v md5 |grep -v sha256 |awk -F "\"" '{print $2}' |xargs wget && \
+	ls -1 *.tar.gz |xargs tar zxfv && \
+	cd postgres* ; ./configure --prefix=$PGBINDIR  ; make world ; sudo make install-world
 
 #setting up a decent working env
 
-RUN echo "export PGDATA=$PGDATADIR" >> ~/.bashrc
-RUN echo "export PATH=$PATH:$PGBINDIR/bin" >> ~/.bashrc
-RUN echo "LD_LIBRARY_PATH=$PGBINDIR/lib">> ~/.bashrc
-RUN echo "alias joe='joe -wordwrap -nobackups'"  >> ~/.bashrc
+RUN echo "export PGDATA=$PGDATADIR" >> ~/.bashrc && \
+	echo "export PATH=$PATH:$PGBINDIR/bin" >> ~/.bashrc && \
+	echo "LD_LIBRARY_PATH=$PGBINDIR/lib">> ~/.bashrc && \
+	echo "alias joe='joe -wordwrap -nobackups'"  >> ~/.bashrc 
 
 # PGDATA creation and initdb -WITH- data checksums
 
-RUN mkdir $PGDATADIR
-RUN $PGBINDIR/bin/initdb -k -D $PGDATADIR
+RUN mkdir $PGDATADIR && \
+	$PGBINDIR/bin/initdb -k -D $PGDATADIR
 
 
 
@@ -56,6 +57,7 @@ RUN echo "listen_addresses = '*'" >> $PGDATADIR/postgresql.conf && \
 	echo "log_destination = 'stderr'" >> $PGDATADIR/postgresql.conf && \
 	echo "logging_collector = on" >> $PGDATADIR/postgresql.conf && \
 	echo "log_filename = 'postgresql-%Y-%m-%d.log'" >> $PGDATADIR/postgresql.conf && \
+	echo "wal_log_hints = on" >> $PGDATADIR/postgresql.conf && \
 	echo "log_line_prefix = ''" >> $PGDATADIR/postgresql.conf
 
 ## Setting pg_hba.conf for passwordless access for all users and replication
