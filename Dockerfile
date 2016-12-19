@@ -10,7 +10,7 @@ ENV PGDATADIR=/home/$PGUSER/pgdata
 
 #Installing packages and creating a OS user
 
-RUN apt-get update && apt-get install -y sudo wget joe less build-essential libreadline-dev zlib1g-dev flex bison libxml2-dev libxslt-dev libssl-dev && \
+RUN apt-get update && apt-get install -y sudo wget joe less build-essential libreadline-dev zlib1g-dev flex bison libxml2-dev libxslt-dev libssl-dev openssh-server screen && \
 	useradd -c /home/$PGUSER -ms /bin/bash $PGUSER
 
 
@@ -67,6 +67,7 @@ RUN echo "host    all             all             10.0.0.1/16            trust" 
 
 #exposing port
 EXPOSE 5432
+EXPOSE 22
 
 #install some extensions , create a replication user and a monkey database
 
