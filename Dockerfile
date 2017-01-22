@@ -14,12 +14,9 @@ RUN apt-get update && apt-get install -y sudo wget joe less build-essential libr
 	useradd -c /home/$PGUSER -ms /bin/bash $PGUSER
 
 
-#add user postgres to sudoers
+#add user postgres to sudoers and setup rsync - SECURITY WARNING
 
-run echo "$PGUSER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-
-RUN echo "lala" && \
-#mkdir -p /etc/default/ && \
+run echo "$PGUSER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
  	echo "uid = $PGUSER " > /etc/rsyncd.conf && \
  	echo "gid = $PGUSER  " >> /etc/rsyncd.conf && \ 
  	echo "use chroot = no " >> /etc/rsyncd.conf && \
@@ -31,7 +28,6 @@ RUN echo "lala" && \
  	echo "path = /home/$PGUSER/wal_archive" >> /etc/rsyncd.conf && \
  	echo "read only = false" >> /etc/rsyncd.conf && \
  	echo "comment = WAL log storage " >>/etc/rsyncd.conf && \
-#	
 	echo "RSYNC_ENABLE=true" > /etc/default/rsync && \
 	echo "RSYNC_OPTS=''" >> /etc/default/rsync && \
 	echo "RSYNC_NICE=''" >>/etc/default/rsync 
@@ -41,7 +37,7 @@ RUN echo "lala" && \
 
 USER $PGUSER
 WORKDIR /home/$PGUSER
-#getting the -latest- (always) postgres version compile world and install
+#getting the -latest- (ALWAYS) postgres version compile world and install
 
 RUN wget https://www.postgresql.org/ftp/latest/ -q -O - |grep "tar.gz" |grep -v md5 |grep -v sha256 |awk -F "\"" '{print $2}' |xargs wget && \
 	ls -1 *.tar.gz |xargs tar zxfv && \
@@ -73,7 +69,6 @@ RUN echo "listen_addresses = '*'" >> $PGDATADIR/postgresql.conf && \
 	echo "wal_level = replica" >> $PGDATADIR/postgresql.conf && \
 	echo "checkpoint_completion_target = 0.9" >> $PGDATADIR/postgresql.conf && \
 	echo "archive_mode = on" >> $PGDATADIR/postgresql.conf && \
-
 	echo "archive_command = '/bin/true'" >> $PGDATADIR/postgresql.conf && \
 	echo "#OPTIONAL ARCHIVE_COMMAND FOR OMNIPITR" >> $PGDATADIR/postgresql.conf && \
 	echo "#archive_command = '/home/$PGUSER/omnipitr/bin/omnipitr-archive -D $PGDATADIR -l $PGDATADIR/pg_log/archive-^Y-^m-^d.log -s /home/$PGUSER/omnipitr_data/state -db /home/$PGUSER/omnipitr_data/backup -dr gzip=rsync://10.0.0.3/wal_archive -t /home/$PGUSER/omnipitr_data/omnipitr/tmp -v \"%p\"'" >> $PGDATADIR/postgresql.conf && \
@@ -92,7 +87,7 @@ RUN echo "listen_addresses = '*'" >> $PGDATADIR/postgresql.conf && \
 RUN echo "host    all             all             10.0.0.1/16            trust" >> $PGDATADIR/pg_hba.conf && \
 	echo "host    replication     repuser         10.0.0.1/16            trust" >> $PGDATADIR/pg_hba.conf
 
-#exposing port
+#exposing ports
 EXPOSE 5432
 EXPOSE 22
 
