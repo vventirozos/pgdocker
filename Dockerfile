@@ -53,14 +53,14 @@ RUN git clone https://github.com/omniti-labs/omnipitr -b OmniPITRv2
 RUN echo "export PGDATA=$PGDATADIR" >> ~/.bashrc && \
 	echo "export PATH=$PATH:$PGBINDIR/bin" >> ~/.bashrc && \
 	echo "LD_LIBRARY_PATH=$PGBINDIR/lib">> ~/.bashrc && \
-	echo "alias joe='joe -wordwrap -nobackups'"  >> ~/.bashrc 
+	echo "alias joe='joe -wordwrap -nobackups -tab 2'"  >> ~/.bashrc 
 
 # PGDATA creation and initdb -WITH- data checksums
 
 RUN mkdir $PGDATADIR && \
 	mkdir /home/$PGUSER/wal_archive && \
 	mkdir -p /home/$PGUSER/omnipitr_data/state && \
-	mkdir -p -p /home/$PGUSER/omnipitr_data/tmp && \
+	mkdir -p /home/$PGUSER/omnipitr_data/tmp && \
 	$PGBINDIR/bin/initdb -k -D $PGDATADIR
 
 
@@ -83,7 +83,7 @@ RUN echo "listen_addresses = '*'" >> $PGDATADIR/postgresql.conf && \
 	echo "logging_collector = on" >> $PGDATADIR/postgresql.conf && \
 	echo "log_filename = 'postgresql-%Y-%m-%d.log'" >> $PGDATADIR/postgresql.conf && \
 	echo "wal_log_hints = on" >> $PGDATADIR/postgresql.conf && \
-	echo "log_line_prefix = ''" >> $PGDATADIR/postgresql.conf
+	echo "log_line_prefix = '%t:%p:%u:[%i] '" >> $PGDATADIR/postgresql.conf
 
 ## Setting pg_hba.conf for passwordless access for all users and replication
 
