@@ -10,9 +10,12 @@ ENV PGDATADIR=/home/$PGUSER/pgdata
 
 #Installing packages and creating a OS user
 
-RUN apt-get update && apt-get install -y sudo wget joe less build-essential libreadline-dev zlib1g-dev flex bison libxml2-dev libxslt-dev libssl-dev openssh-server screen git && \
+RUN apt-get update && apt-get install -y sudo wget apt-transport-https joe less build-essential libreadline-dev zlib1g-dev flex bison libxml2-dev libxslt-dev libssl-dev openssh-server screen git && \
 	useradd -c /home/$PGUSER -ms /bin/bash $PGUSER
 
+RUN echo "deb [trusted=yes] https://repo.iovisor.org/apt/xenial xenial-nightly main" | sudo tee /etc/apt/sources.list.d/iovisor.list
+
+RUN apt-get update && apt-get install -y bcc-tools
 
 #add user postgres to sudoers and setup rsync - SECURITY WARNING
 
@@ -41,9 +44,9 @@ WORKDIR /home/$PGUSER
 
 RUN wget https://www.postgresql.org/ftp/latest/ -q -O - |grep "tar.gz" |grep -v md5 |grep -v sha256 |awk -F "\"" '{print $2}' |xargs wget && \
 	ls -1 *.tar.gz |xargs tar zxfv && \
-	cd postgres* ; ./configure --prefix=$PGBINDIR  ; make world ; sudo make install-world
+	cd postgres* ; ./configure --prefix=$PGBINDIR ; make world ; sudo make install-world
 # Downloading OmniPITR
-RUN git clone https://github.com/omniti-labs/omnipitr
+RUN git clone https://github.com/omniti-labs/omnipitr -b OmniPITRv2
 
 #setting up a decent working env
 
@@ -109,7 +112,7 @@ RUN $PGBINDIR/bin/pg_ctl -D $PGDATADIR/ start ; sleep 10 && \
 
 RUN echo "standby_mode = 'on' " >$PGDATADIR/recovery.done && \
 	echo "primary_conninfo = 'user=repuser host=10.0.0.2 port=5432 application_name=a_slave'" >>$PGDATADIR/recovery.done && \
-	echo "#restore_command = '/home/$PGUSER/omnipitr/bin/omnipitr-restore -l $PGDATADIR/pg_log/restore-^Y-^m-^d.log -s gzip=/home/$PGUSER/wal_archive/ -f $PGDATADIR/finish.recovery -p $PGDATADIR/pause.removal/pause.removal -t /home/$PGUSER/omnipitr_data/omnipitr/tmp -ep hang -r %r -rb -sr -v %f %p'" >>$PGDATADIR/recovery.done && \
+	echo "#restore_command = '/home/$PGUSER/omnipitr/bin/omnipitr-restore -l $PGDATADIR/pg_log/restore-^Y-^m-^d.log -s gzip=/home/$PGUSER/wal_archive/ -f $PGDATADIR/finish.recovery -p $PGDATADIR/pause.removal -t /home/$PGUSER/omnipitr_data/omnipitr/tmp -ep hang -r %r -rb -sr -v %f %p'" >>$PGDATADIR/recovery.done && \
 	echo "#archive_cleanup_command = '/home/$PGUSER/omnipitr/bin/omnipitr-cleanup -l /$PGDATADIR/pg_log/cleanup-^Y-^m-^d.log -a gzip=/home/$PGUSER/wal_archive/ -p $PGDATADIR/pause.removal %r'" >>$PGDATADIR/recovery.done && \
 	echo "trigger_file = '$PGDATADIR/finish.recovery'" >>$PGDATADIR/recovery.done && \ 
 	echo "recovery_target_timeline = 'latest'" >>$PGDATADIR/recovery.done 
