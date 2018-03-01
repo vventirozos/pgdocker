@@ -69,7 +69,7 @@ RUN mkdir $PGDATADIR && \
 
 RUN echo "listen_addresses = '*'" >> $PGDATADIR/postgresql.conf && \
 	echo "port = 5432" >> $PGDATADIR/postgresql.conf && \
-	echo "wal_level = replica" >> $PGDATADIR/postgresql.conf && \
+	echo "wal_level = logical" >> $PGDATADIR/postgresql.conf && \
 	echo "checkpoint_completion_target = 0.9" >> $PGDATADIR/postgresql.conf && \
 	echo "archive_mode = on" >> $PGDATADIR/postgresql.conf && \
 	echo "archive_command = '/bin/true'" >> $PGDATADIR/postgresql.conf && \
